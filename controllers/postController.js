@@ -4,9 +4,7 @@ const PostController = {
   async create(req, res) {
     try {
       if (!req.body.title || !req.body.body) {
-        return res
-          .status(400)
-          .send({ message: "Título y contenido son requeridos" });
+        return res.status(400).send({ message: "Título y contenido son requeridos" });
       }
 
       const imagePath = req.file ? req.file.filename : null;
@@ -19,9 +17,7 @@ const PostController = {
       res.status(201).send(post);
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al crear el post" });
+      res.status(500).send({ message: "Ha habido un problema al crear el post" });
     }
   },
   async getOne(req, res) {
@@ -52,9 +48,7 @@ const PostController = {
       res.send({ message: "Post actualizado correctamente", post });
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al actualizar el post" });
+      res.status(500).send({ message: "Ha habido un problema al actualizar el post" });
     }
   },
   async delete(req, res) {
@@ -63,9 +57,7 @@ const PostController = {
       res.send({ message: "Post eliminado", post });
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al eliminar el post" });
+      res.status(500).send({ message: "Ha habido un problema al eliminar el post" });
     }
   },
   async getPostsByName(req, res) {
@@ -78,9 +70,7 @@ const PostController = {
       res.send(posts);
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al traer los posts" });
+      res.status(500).send({ message: "Ha habido un problema al traer los posts" });
     }
   },
 
@@ -88,9 +78,7 @@ const PostController = {
     try {
       const post = await Post.findById(req.params._id);
       const userId = req.user._id;
-      const hasLiked = post.likes.some(
-        (id) => id.toString() === req.user._id.toString()
-      );
+      const hasLiked = post.likes.some((id) => id.toString() === req.user._id.toString());
       if (hasLiked) {
         post.likes.pull(userId);
       } else {
@@ -98,9 +86,7 @@ const PostController = {
       }
       await post.save();
       res.status(200).send({
-        message: hasLiked
-          ? "Has quitado tu like del post"
-          : "Has dado like al post",
+        message: hasLiked ? "Has quitado tu like del post" : "Has dado like al post",
         likesCount: post.likes.length,
         post,
       });

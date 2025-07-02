@@ -22,19 +22,32 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-     image: [{
-      type: String
-    }],
+    image: {
+      type: String,
+      default: "https://i.imgur.com/1CeZ2x4.png",
+    },
     tokens: [
       {
         token: {
           type: String,
           required: true,
         },
-       
+      },
+    ],
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
       },
     ],
   },
+
   { timestamps: true }
 );
 UserSchema.index({
