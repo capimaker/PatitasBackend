@@ -4,7 +4,7 @@ require("dotenv").config();
 const swaggerUI = require("swagger-ui-express");
 const docs = require("./docs/index");
 const PORT = process.env.PORT;
-const dbConnection = require("./config/config");
+const { dbConnection } = require("./config/config");
 
 //MIDDLEWARE
 app.use(express.json());

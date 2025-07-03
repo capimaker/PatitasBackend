@@ -1,6 +1,5 @@
-require("dotenv").config()
+require("dotenv").config();
 const mongoose = require("mongoose");
-
 
 const PORT = process.env.PORT || 3001;
 //const { MONGO_URI } = require("./keys");
@@ -12,8 +11,8 @@ const dbConnection = async () => {
     console.log("Base de datos conectada con éxito");
   } catch (error) {
     console.error(error);
-   // throw new Error("Error a la hora de iniciar la base de datos");
+    // throw new Error("Error a la hora de iniciar la base de datos");
   }
 };
 
-module.exports = dbConnection;
+module.exports = { dbConnection };
