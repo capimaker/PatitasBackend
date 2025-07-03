@@ -8,7 +8,7 @@ const commentSeeder = async () => {
   try {
     await dbConnection();
 
-    //await Comment.deleteMany()
+    await Comment.deleteMany();
 
     const users = await User.find();
 

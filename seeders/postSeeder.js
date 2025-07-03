@@ -19,7 +19,7 @@ const images = [
 
 const randomImages = () => {
   const shuffled = [...images].sort(() => 0.5 - Math.random());
-  const count = Math.floor(Math.random() * 3);
+  const count = Math.floor(Math.random() * 3) + 1;
   return shuffled.slice(0, count);
 };
 
