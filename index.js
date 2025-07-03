@@ -5,9 +5,11 @@ const swaggerUI = require("swagger-ui-express");
 const docs = require("./docs/index");
 const PORT = process.env.PORT;
 const { dbConnection } = require("./config/config");
+const cors = require("cors");
 
 //MIDDLEWARE
 app.use(express.json());
+app.use(cors());
 
 dbConnection();
 
