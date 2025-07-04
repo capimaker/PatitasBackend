@@ -68,7 +68,7 @@ const UserController = {
       user.tokens.push({ token });
       await user.save();
       res.send({
-        message: "¡Bienvenid@!Has finalizado con éxito tu log in " + user.name,
+        message: "¡Bienvenid@!Has finalizado con éxito tu log in " + user.name,user,
         token,
       });
     } catch (error) {
