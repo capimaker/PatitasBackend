@@ -25,6 +25,17 @@ const commentSeeder = async () => {
 
     const commentsToInsert = [];
 
+    for (const post of posts) {
+      const randomUser = users[Math.floor(Math.random() * users.length)];
+      commentsToInsert.push({
+        text: faker.lorem.sentence(),
+        postId: post._id,
+        user: randomUser._id,
+        likes: [],
+        image: [],
+      });
+    }
+
     for (let i = 0; i < 20; i++) {
       const randomUser = users[Math.floor(Math.random() * users.length)];
       const randomPost = posts[Math.floor(Math.random() * posts.length)];
@@ -40,6 +51,12 @@ const commentSeeder = async () => {
       });
     }
     const insertedComments = await Comment.insertMany(commentsToInsert);
+
+    for (const comment of insertedComments) {
+      await Post.findByIdAndUpdate(comment.postId, {
+        $push: { comments: comment._id },
+      });
+    }
 
     console.log(`✅ Comentarios creados: ${insertedComments.length}`);
 
