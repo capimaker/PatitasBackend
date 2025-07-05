@@ -78,17 +78,27 @@ const PostController = {
     try {
       const post = await Post.findById(req.params._id);
       const userId = req.user._id;
+
       const hasLiked = post.likes.some((id) => id.toString() === req.user._id.toString());
+
       if (hasLiked) {
         post.likes.pull(userId);
       } else {
         post.likes.push(userId);
       }
       await post.save();
+
+      const updatedPost = await Post.findById(post._id)
+        .populate("user", "image name")
+        .populate({
+          path: "comments",
+          populate: { path: "user", select: "image name" },
+        });
+
       res.status(200).send({
         message: hasLiked ? "Has quitado tu like del post" : "Has dado like al post",
-        likesCount: post.likes.length,
-        post,
+        likesCount: updatedPost.likes.length,
+        post: updatedPost,
       });
     } catch (error) {
       res.status(500);
@@ -102,10 +112,14 @@ const PostController = {
       const { page = 1, limit = 10 } = req.query;
       const post = await Post.find()
         .populate({
+          path: "user",
+          select: "name image",
+        })
+        .populate({
           path: "comments",
           populate: {
             path: "user",
-            select: "text",
+            select: "name image",
           },
         })
         .limit(limit * 1)
