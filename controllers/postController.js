@@ -22,13 +22,15 @@ const PostController = {
   },
   async getOne(req, res) {
     try {
-      const post = await Post.findById(req.params._id).populate({
-        path: "comments",
-        populate: {
-          path: "user",
-          select: "text",
-        },
-      });
+      const post = await Post.findById(req.params._id)
+        .populate("user", "name image")
+        .populate({
+          path: "comments",
+          populate: {
+            path: "user",
+            select: "name image",
+          },
+        });
 
       res.status(200).send(post);
     } catch (error) {
@@ -66,7 +68,7 @@ const PostController = {
         return res.status(400).send("Búsqueda demasiado larga");
       }
       const post = new RegExp(req.params.title, "i");
-      const posts = await Post.find({ title: post });
+      const posts = await Post.find({ title: post }).populate("user", "name image");
       res.send(posts);
     } catch (error) {
       console.log(error);
