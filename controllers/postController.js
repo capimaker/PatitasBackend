@@ -9,11 +9,14 @@ const PostController = {
 
       const imagePath = req.file ? req.file.filename : null;
 
-      const post = await Post.create({
+      let post = await Post.create({
         ...req.body,
         image: imagePath,
         user: req.user._id,
       });
+
+      post = await post.populate("user", "name image");
+
       res.status(201).send(post);
     } catch (error) {
       console.log(error);
@@ -111,7 +114,7 @@ const PostController = {
   },
   async getAll(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      /*       const { page = 1, limit = 10 } = req.query; */
       const post = await Post.find()
         .populate({
           path: "user",
@@ -124,8 +127,9 @@ const PostController = {
             select: "name image",
           },
         })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
+        .sort({ createdAt: -1 });
+      /* .limit(limit * 1)
+        .skip((page - 1) * limit); */
 
       res.status(200).send(post);
     } catch (error) {
