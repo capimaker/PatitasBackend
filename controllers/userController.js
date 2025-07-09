@@ -113,7 +113,10 @@ const UserController = {
   //GET BY ID
   async getById(req, res) {
     try {
-      const userById = await User.findById(req.params._id);
+
+      const userById = await User.findById(req.params._id)
+      .populate("followers", "name image")
+      .populate("following", "name image");
       res.send(userById);
     } catch (error) {
       console.error(error);
@@ -136,9 +139,19 @@ const UserController = {
   //GET únicamente el usuario conectado
   async getUsuarioConectado(req, res) {
     try {
+     // const user = await User.findById(req.user._id)
+     const populated = await User.findById(req.user._id)
+      .select("-password -tokens") // aqui voy a quitar datos sensibles
+      .populate("followers", "name image")
+      .populate("following", "name image");
+
+       if (!user) {
+      return res.status(404).send({ msg: "Usuario no encontrado" });
+    }
       res.send({
         msg: "Perfil del usuario autenticado",
-        user: req.user,
+        //user: req.user,
+        user: populated,
       });
     } catch (error) {
       res.status(500).send({ msg: "Error al obtener el perfil", error });
