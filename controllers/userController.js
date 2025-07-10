@@ -10,7 +10,7 @@ const UserController = {
   async create(req, res) {
     try {
       const password = await bcrypt.hash(req.body.password, 10);
-      const imagePath = req.file ? req.file.filename : null;
+      const imagePath = req.file ? req.file.filename : undefined;
 
       const userData = {
         ...req.body,
@@ -33,10 +33,7 @@ const UserController = {
         user,
       });
     } catch (error) {
-      if (
-        error.message &&
-        error.message.includes("Solo se permiten imágenes")
-      ) {
+      if (error.message && error.message.includes("Solo se permiten imágenes")) {
         return res.status(400).send({
           msg: "Error en la subida de la imagen: " + error.message,
           error: error.message,
@@ -59,9 +56,7 @@ const UserController = {
         return res.status(400).send("Correo o contraseña incorrectos");
       }
       if (!user.confirmed) {
-        return res
-          .status(403)
-          .send("Debes confirmar tu correo antes de iniciar sesión");
+        return res.status(403).send("Debes confirmar tu correo antes de iniciar sesión");
       }
       const isMatch = bcrypt.compareSync(req.body.password, user.password);
 
@@ -73,7 +68,7 @@ const UserController = {
       user.tokens.push({ token });
       await user.save();
       res.send({
-        message: "¡Bienvenid@!Has finalizado con éxito tu log in " + user.name,
+        message: "¡Bienvenid@!Has finalizado con éxito tu log in " + user.name,user,
         token,
       });
     } catch (error) {
@@ -93,9 +88,7 @@ const UserController = {
       res.send({ message: "User actualizado correctamente", user });
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al actualizar el user" });
+      res.status(500).send({ message: "Ha habido un problema al actualizar el user" });
     }
   },
   async logout(req, res) {
@@ -120,13 +113,14 @@ const UserController = {
   //GET BY ID
   async getById(req, res) {
     try {
-      const userById = await User.findById(req.params._id);
+
+      const userById = await User.findById(req.params._id)
+      .populate("followers", "name image")
+      .populate("following", "name image");
       res.send(userById);
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al traer el usuario por ID" });
+      res.status(500).send({ message: "Ha habido un problema al traer el usuario por ID" });
     }
   },
   //GET BY NAME
@@ -145,9 +139,19 @@ const UserController = {
   //GET únicamente el usuario conectado
   async getUsuarioConectado(req, res) {
     try {
+     // const user = await User.findById(req.user._id)
+     const populated = await User.findById(req.user._id)
+      .select("-password -tokens") // aqui voy a quitar datos sensibles
+      .populate("followers", "name image")
+      .populate("following", "name image");
+
+       if (!user) {
+      return res.status(404).send({ msg: "Usuario no encontrado" });
+    }
       res.send({
         msg: "Perfil del usuario autenticado",
-        user: req.user,
+        //user: req.user,
+        user: populated,
       });
     } catch (error) {
       res.status(500).send({ msg: "Error al obtener el perfil", error });
@@ -169,6 +173,36 @@ const UserController = {
     } catch (error) {
       console.error(error);
       res.status(500).send("Error al confirmar el usuario");
+    }
+  },
+  async toggleFollow(req, res) {
+    try {
+      const userId = req.params._id;
+      const currentUserId = req.user._id;
+      if (currentUserId.toString() === userId) {
+        return res.status(400).send("No puedes seguirte a tí mismo");
+      }
+      const targetUser = await User.findById(userId);
+      if (!targetUser) {
+        return res.status(404).send("Usuario no encontrado");
+      }
+      const isFollowing = req.user.following.includes(userId);
+      if (isFollowing) {
+        req.user.following.pull(userId);
+        targetUser.followers.pull(currentUserId);
+      } else {
+        req.user.following.push(userId);
+        targetUser.followers.push(currentUserId);
+      }
+      await req.user.save();
+      await targetUser.save();
+      res.status(200).send({
+        msg: isFollowing ? "Has dejado de seguir al usuari@" : "Ahora sigues a este usuari@",
+        followersCount: targetUser.followers.length,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error con los followers");
     }
   },
 };

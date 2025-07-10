@@ -4,35 +4,36 @@ const PostController = {
   async create(req, res) {
     try {
       if (!req.body.title || !req.body.body) {
-        return res
-          .status(400)
-          .send({ message: "Título y contenido son requeridos" });
+        return res.status(400).send({ message: "Título y contenido son requeridos" });
       }
 
       const imagePath = req.file ? req.file.filename : null;
 
-      const post = await Post.create({
+      let post = await Post.create({
         ...req.body,
         image: imagePath,
         user: req.user._id,
       });
+
+      post = await post.populate("user", "name image");
+
       res.status(201).send(post);
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al crear el post" });
+      res.status(500).send({ message: "Ha habido un problema al crear el post" });
     }
   },
   async getOne(req, res) {
     try {
-      const post = await Post.findById(req.params._id).populate({
-        path: "comments",
-        populate: {
-          path: "user",
-          select: "text",
-        },
-      });
+      const post = await Post.findById(req.params._id)
+        .populate("user", "name image")
+        .populate({
+          path: "comments",
+          populate: {
+            path: "user",
+            select: "name image",
+          },
+        });
 
       res.status(200).send(post);
     } catch (error) {
@@ -52,9 +53,7 @@ const PostController = {
       res.send({ message: "Post actualizado correctamente", post });
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al actualizar el post" });
+      res.status(500).send({ message: "Ha habido un problema al actualizar el post" });
     }
   },
   async delete(req, res) {
@@ -63,9 +62,7 @@ const PostController = {
       res.send({ message: "Post eliminado", post });
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al eliminar el post" });
+      res.status(500).send({ message: "Ha habido un problema al eliminar el post" });
     }
   },
   async getPostsByName(req, res) {
@@ -74,13 +71,11 @@ const PostController = {
         return res.status(400).send("Búsqueda demasiado larga");
       }
       const post = new RegExp(req.params.title, "i");
-      const posts = await Post.find({ title: post });
+      const posts = await Post.find({ title: post }).populate("user", "name image");
       res.send(posts);
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .send({ message: "Ha habido un problema al traer los posts" });
+      res.status(500).send({ message: "Ha habido un problema al traer los posts" });
     }
   },
 
@@ -88,21 +83,27 @@ const PostController = {
     try {
       const post = await Post.findById(req.params._id);
       const userId = req.user._id;
-      const hasLiked = post.likes.some(
-        (id) => id.toString() === req.user._id.toString()
-      );
+
+      const hasLiked = post.likes.some((id) => id.toString() === req.user._id.toString());
+
       if (hasLiked) {
         post.likes.pull(userId);
       } else {
         post.likes.push(userId);
       }
       await post.save();
+
+      const updatedPost = await Post.findById(post._id)
+        .populate("user", "image name")
+        .populate({
+          path: "comments",
+          populate: { path: "user", select: "image name" },
+        });
+
       res.status(200).send({
-        message: hasLiked
-          ? "Has quitado tu like del post"
-          : "Has dado like al post",
-        likesCount: post.likes.length,
-        post,
+        message: hasLiked ? "Has quitado tu like del post" : "Has dado like al post",
+        likesCount: updatedPost.likes.length,
+        post: updatedPost,
       });
     } catch (error) {
       res.status(500);
@@ -113,17 +114,22 @@ const PostController = {
   },
   async getAll(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      /*       const { page = 1, limit = 10 } = req.query; */
       const post = await Post.find()
+        .populate({
+          path: "user",
+          select: "name image",
+        })
         .populate({
           path: "comments",
           populate: {
             path: "user",
-            select: "text",
+            select: "name image",
           },
         })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
+        .sort({ createdAt: -1 });
+      /* .limit(limit * 1)
+        .skip((page - 1) * limit); */
 
       res.status(200).send(post);
     } catch (error) {
